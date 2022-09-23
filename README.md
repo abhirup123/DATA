@@ -7,3 +7,11 @@ and our last step will be find the meeting and business type of values from body
 
 
 Note: please read about Name Entity Recognition algorith a.k.a NER algorithm.
+
+
+Instruction to setup project:
+1. download the .csv file from the link https://drive.google.com/file/d/1SD_iEUK2ZQfEGwCgXXy9uJN4vWqX4k7d/view?usp=sharing
+2. and save the file as excel workbook not as .csv  and rename the file as Data.
+3. and then create a new folder in jupyter notebook and upload all the the three files which are (geeting data, data transformation , Data)
+4. make sure Data file should be saved as Data.
+5. start executing the getting data and then data transformation file.
