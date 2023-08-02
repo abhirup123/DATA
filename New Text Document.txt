@@ -1,0 +1,39 @@
+import os
+
+input_directory='//rsc.humad.com/rdrive/FinRec/FRSolutions/FRS Reporting/RXS Information/Sagility OPM/APC Historical PASGN files/OUTPUT_FILES/part2/part2.1/'
+
+output_file='//rsc.humad.com/rdrive/FinRec/FRSolutions/FRS Reporting/RXS Information/Sagility OPM/APC Historical PASGN files/OUTPUT_FILES/part2/part2.1/COMBINED_4/combined_file4.txt'
+
+def get_column_names(file_path):
+    with open(file_path,'r') as file:
+        first_line=file.readline().strip()
+    column_names=first_line.split('|')
+    return column_names
+    
+def combine_files_by_column_names(input_directory,output_file):
+    file_list=[file for file in os.listdir(input_directory) if file.endswith('.txt')]
+    first_file_path=os.path.join(input_directory,file_list[0])
+    column_names=get_column_names(first_file_path)
+    data_dict={column: [] for column in column_names}
+    
+    for file_name in file_list:
+        file_path=os.path.join(input_directory,file_name)
+        file_column_names=get_column_names(file_path)
+        
+        if file_column_names != column_names:
+            print(f"File '{file_name}' has different column names. skipping...")
+            continue
+        with open(file_path,'r') as file:
+            next(file)
+            for line in file:
+                values=line.strip().split('|')
+                for i,column in enumerate(column_names):
+                    data_dict[column].append(values[i])
+                    
+    with open(output_file,'w') as output:
+        output.write('|'.join(column_names)+'\n')
+        
+        for row in zip(*data_dict.values()):
+            output.write('|'.join(row)+'\n')
+            
+combine_files_by_column_names(input_directory, output_file)
