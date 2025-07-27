@@ -1,0 +1,403 @@
+delete from fr_hgs_sandbox.KA_DUPLICATE_CLAIMS_LIST_PREPAY_MODEL_1_DAILY_PREDICTION_2;
+insert into fr_hgs_sandbox.KA_DUPLICATE_CLAIMS_LIST_PREPAY_MODEL_1_DAILY_PREDICTION_2 (
+select SRC_CLAIM_NBR,GROUPER_RULE_ID,ROW_NUMBER() OVER (ORDER BY  SRC_CLAIM_NBR) SLNO from(
+select distinct SRC_CLAIM_NBR,GROUPER_RULE_ID from fr_hgs_sandbox.KA_DUPLICATE_CLAIMS_LIST_PREPAY_MODEL_1_DAILY_PREDICTION));
+
+
+
+delete from fr_hgs_sandbox.KA_DUPLICATES_LINE_LEVEL_PREPAY_MODEL_1_DAILY_PREDICTION;
+insert into fr_hgs_sandbox.KA_DUPLICATES_LINE_LEVEL_PREPAY_MODEL_1_DAILY_PREDICTION
+with x1 as
+(select /*+ parallel(MLF,4) */ 
+distinct MLF.src_claim_nbr,MLF.Medclm_Key,
+MLF.Pot_Cd,
+MLF.Bill_Type_Cd,
+MLF.Revenue_Cd,
+MLF.Admit_Src_Cd,
+MLF.Hcpcs_Cpt4_Base_Cd1,
+MLF.Cpt_Mod_Cd,
+MLF.Primary_Diag_Cd,
+MLF.Prov_Tax_Id,
+MLF.Npi_Id,
+MLF.Serv_From_Date_Skey as Serv_From_Date,
+MLF.Serv_To_Date_Skey as Serv_To_Date,
+MLF.Chrg_Amt,
+MLF.Net_Paid_Amt as Paid_Amt,
+MLF.Deduct_Amt,
+MLF.Coins_Amt as Mbr_Coins_Amt,
+MLF.Copay_Amt as Mbr_Copay_Amt,
+MLF.Mbr_Cost_Shr_Amt as MBR_RESP_AMT,
+MLF.Serv_Unit_Cnt,
+MLF.Cis_Contract_Key,
+b.grouper_rule_id
+from edw_prod.MEDCLM_DLY_LINE_FACT MLF 
+join fr_hgs_sandbox.KA_DUPLICATE_CLAIMS_LIST_PREPAY_MODEL_1_DAILY_PREDICTION_2 b
+on MLF.src_claim_nbr=cast(b.src_claim_nbr as varchar2(20))
+where MLF.src_claim_nbr in (select distinct cast(src_claim_nbr as varchar2(20)) from 
+fr_hgs_sandbox.KA_DUPLICATE_CLAIMS_LIST_PREPAY_MODEL_1_DAILY_PREDICTION_2 where SLNO between 1 and 749))
+select /*+  parallel(ML,4) parallel(MS,4) parallel(pd,4) parallel(CC,4) */ 
+distinct MS.src_claim_nbr,
+MS.Src_Lob_Cd,
+--MS.Src_Clm_Type_Cd,
+x1.Pot_Cd,
+x1.Bill_Type_Cd,
+x1.Revenue_Cd,
+MS.Src_Drg_Cd,
+--MLF.Src_Platform_Cd,
+MS.Src_Cause_Cd,
+--dm.allow_ex_cd,
+--dm.denied_ex_cd,
+MS.Override_Cd,
+MS.Ctrct_Cat_Cd,
+CC.Reimb_Meth_Cd,
+--dm.src_admit_date,
+--dm.src_discharge_date,
+--dm.admit_diag_cd,
+--dm.admit_hour,
+x1.Admit_Src_Cd,
+ML.Admit_Type_Cd,
+x1.Hcpcs_Cpt4_Base_Cd1,
+--dm.hcpcs_cpt4_base_cd2,
+x1.Cpt_Mod_Cd,
+MS.Cpt_Mod_Cd2,
+MS.Cpt_Mod_Cd3,
+MS.Cpt_Mod_Cd4,
+MS.Cpt_Mod_Cd5,
+x1.Primary_Diag_Cd,
+ML.diag_cd2,
+ML.diag_cd3,
+ML.diag_cd4,
+ML.diag_cd5,
+ML.diag_cd6,
+ML.diag_cd7,
+ML.diag_cd8,
+ML.diag_cd9,
+ML.diag_cd10,
+x1.Prov_Tax_Id,
+MS.Src_Prov_Type_Cd as Prov_Type_Cd,
+x1.Npi_Id,
+MS.Mbr_Age,
+MS.Client_Nbr,
+x1.Serv_From_Date,
+x1.Serv_To_Date,
+x1.Chrg_Amt,
+x1.Paid_Amt,
+x1.Deduct_Amt,
+x1.Mbr_Coins_Amt,
+x1.Mbr_Copay_Amt,
+x1.MBR_RESP_AMT,
+ML.Ctrct_Mop_Cd,
+coalesce (SERV_STATE_CD , BILL_STATE_CD) as SERV_STATE_CD,
+MS.Src_Serv_Type_Cd1 as Serv_Type_Cd1,
+--MS.Src_Serv_Type_Cd2 as Serv_Type_Cd2,
+--dm.serv_type_cd2,
+--dm.serv_type_cd_other,
+x1.Serv_Unit_Cnt,
+--CC.Contract_Eff_Date,
+--CC.Contract_Term_Date,
+x1.grouper_rule_id
+--b.process_date,
+--b.savings,
+--b.status
+from --fr_dm_pro.fr_datamart_medclms dm,
+x1
+join edw_prod.MEDCLM_DLY_LINE_SECONDARY MS
+on x1.Medclm_Key=MS.Medclm_Key
+join edw_prod.MEDCLM_DLY_LINE ML
+on x1.Medclm_Key=ML.Medclm_Key
+join edw_prod.CIS_CONTRACT CC
+on x1.Cis_Contract_Key =cc.cis_contract_key
+join edw_prod.src_provider_dly   pd
+on MS.Src_Provider_Id = pd.src_provider_id;
+
+
+
+select count(distinct src_claim_nbr) from fr_hgs_sandbox.KA_DUPLICATES_LINE_LEVEL_PREPAY_MODEL_1_DAILY_PREDICTION;
+
+-------------------------------------------------------------------------------------------------
+with b as
+(select distinct src_claim_nbr,count(distinct cpt_mod_cd) as MOD_CNT from
+(select distinct a.src_claim_nbr,a.cpt_mod_cd as cpt_mod_cd
+from fr_hgs_sandbox.KA_DUPLICATES_LINE_LEVEL_PREPAY_MODEL_1_DAILY_PREDICTION a
+union
+select distinct a.src_claim_nbr,a.cpt_mod_cd2 as cpt_mod_cd
+from fr_hgs_sandbox.KA_DUPLICATES_LINE_LEVEL_PREPAY_MODEL_1_DAILY_PREDICTION a
+union
+select distinct a.src_claim_nbr,a.cpt_mod_cd3 as cpt_mod_cd
+from fr_hgs_sandbox.KA_DUPLICATES_LINE_LEVEL_PREPAY_MODEL_1_DAILY_PREDICTION a
+union
+select distinct a.src_claim_nbr,a.cpt_mod_cd4 as cpt_mod_cd
+from fr_hgs_sandbox.KA_DUPLICATES_LINE_LEVEL_PREPAY_MODEL_1_DAILY_PREDICTION a
+union
+select distinct a.src_claim_nbr,a.cpt_mod_cd5 as cpt_mod_cd
+from fr_hgs_sandbox.KA_DUPLICATES_LINE_LEVEL_PREPAY_MODEL_1_DAILY_PREDICTION a)
+group by src_claim_nbr)
+
+select distinct a.SRC_CLAIM_NBR,
+
+max(a.SRC_LOB_CD) as SRC_LOB_CD,
+
+max(case when  a.POT_CD = '11' then 1 else 0 end) as POT_CD_11,
+max(case when  a.POT_CD = '21' then 1 else 0 end) as POT_CD_21,
+max(case when  a.POT_CD = '22' then 1 else 0 end) as POT_CD_22,
+max(case when  a.POT_CD = '12' then 1 else 0 end) as POT_CD_12,
+max(case when  a.POT_CD = '81' then 1 else 0 end) as POT_CD_81,
+max(case when  a.POT_CD = '41' then 1 else 0 end) as POT_CD_41,
+max(case when  a.POT_CD = '99' then 1 else 0 end) as POT_CD_99,
+max(case when  a.POT_CD = '24' then 1 else 0 end) as POT_CD_24,
+max(case when  a.POT_CD = '23' then 1 else 0 end) as POT_CD_23,
+max(case when  a.POT_CD = '19' then 1 else 0 end) as POT_CD_19,
+max(case when  a.POT_CD = '02' then 1 else 0 end) as POT_CD_02,
+max(case when  a.POT_CD = '31' then 1 else 0 end) as POT_CD_31,
+max(case when  a.POT_CD = '32' then 1 else 0 end) as POT_CD_32,
+max(case when  a.POT_CD not in ('11','21','22','12','81','41','99','24','23','19','02','31','32')  then 1 else 0 end) as POT_CD_OTHERS,
+
+max(a.BILL_TYPE_CD) as BILL_TYPE_CD,
+
+max(case when  a.REVENUE_CD is null then 1 else 0 end) as REVENUE_CD_MISSING,
+max(case when  a.REVENUE_CD = '0250' then 1 else 0 end) as REVENUE_CD_0250,
+max(case when  a.REVENUE_CD = '0301' then 1 else 0 end) as REVENUE_CD_0301,
+max(case when  a.REVENUE_CD = '0305' then 1 else 0 end) as REVENUE_CD_0305,
+max(case when  a.REVENUE_CD = '0300' then 1 else 0 end) as REVENUE_CD_0300,
+max(case when  a.REVENUE_CD = '0730' then 1 else 0 end) as REVENUE_CD_0730,
+max(case when  a.REVENUE_CD = '0450' then 1 else 0 end) as REVENUE_CD_0450,
+max(case when  a.REVENUE_CD = '0306' then 1 else 0 end) as REVENUE_CD_0306,
+max(case when  a.REVENUE_CD = '0424' then 1 else 0 end) as REVENUE_CD_0424,
+max(case when  a.REVENUE_CD = '0272' then 1 else 0 end) as REVENUE_CD_0272,
+max(case when  a.REVENUE_CD = '0324' then 1 else 0 end) as REVENUE_CD_0324,
+max(case when  a.REVENUE_CD = '0420' then 1 else 0 end) as REVENUE_CD_0420,
+max(case when  a.REVENUE_CD = '0320' then 1 else 0 end) as REVENUE_CD_0320,
+max(case when  a.REVENUE_CD = '0370' then 1 else 0 end) as REVENUE_CD_0370,
+max(case when  a.REVENUE_CD = '0307' then 1 else 0 end) as REVENUE_CD_0307,
+max(case when  a.REVENUE_CD = '0258' then 1 else 0 end) as REVENUE_CD_0258,
+max(case when  a.REVENUE_CD = '0434' then 1 else 0 end) as REVENUE_CD_0434,
+max(case when  a.REVENUE_CD = '0302' then 1 else 0 end) as REVENUE_CD_0302,
+max(case when  a.REVENUE_CD = '0270' then 1 else 0 end) as REVENUE_CD_0270,
+max(case when  a.REVENUE_CD = '0360' then 1 else 0 end) as REVENUE_CD_0360,
+max(case when  a.REVENUE_CD = '0430' then 1 else 0 end) as REVENUE_CD_0430,
+max(case when  a.REVENUE_CD = '0410' then 1 else 0 end) as REVENUE_CD_0410,
+max(case when  a.REVENUE_CD = '0352' then 1 else 0 end) as REVENUE_CD_0352,
+max(case when  a.REVENUE_CD = '0278' then 1 else 0 end) as REVENUE_CD_0278,
+max(case when  a.REVENUE_CD = '0710' then 1 else 0 end) as REVENUE_CD_0710,
+max(case when  a.REVENUE_CD = '0636' then 1 else 0 end) as REVENUE_CD_0636,
+max(case when  a.REVENUE_CD = '0483' then 1 else 0 end) as REVENUE_CD_0483,
+max(case when  a.REVENUE_CD = '0351' then 1 else 0 end) as REVENUE_CD_0351,
+max(case when  a.REVENUE_CD = '0206' then 1 else 0 end) as REVENUE_CD_0206,
+max(case when  a.REVENUE_CD = '0460' then 1 else 0 end) as REVENUE_CD_0460,
+max(case when  a.REVENUE_CD = '0402' then 1 else 0 end) as REVENUE_CD_0402,
+max(case when  a.REVENUE_CD = '0260' then 1 else 0 end) as REVENUE_CD_0260,
+max(case when  a.REVENUE_CD = '0120' then 1 else 0 end) as REVENUE_CD_0120,
+max(case when  a.REVENUE_CD = '0121' then 1 else 0 end) as REVENUE_CD_0121,
+max(case when  a.REVENUE_CD = '0350' then 1 else 0 end) as REVENUE_CD_0350,
+max(case when  a.REVENUE_CD = '0921' then 1 else 0 end) as REVENUE_CD_0921,
+max(case when  a.REVENUE_CD = '0110' then 1 else 0 end) as REVENUE_CD_0110,
+max(case when  a.REVENUE_CD = '0361' then 1 else 0 end) as REVENUE_CD_0361,
+max(case when  a.REVENUE_CD = '0310' then 1 else 0 end) as REVENUE_CD_0310,
+max(case when  a.REVENUE_CD = '0390' then 1 else 0 end) as REVENUE_CD_0390,
+max(case when  a.REVENUE_CD = '0200' then 1 else 0 end) as REVENUE_CD_0200,
+max(case when  a.REVENUE_CD = '0255' then 1 else 0 end) as REVENUE_CD_0255,
+max(case when  a.REVENUE_CD = '0111' then 1 else 0 end) as REVENUE_CD_0111,
+max(case when  a.REVENUE_CD = '0480' then 1 else 0 end) as REVENUE_CD_0480,
+max(case when  a.REVENUE_CD = '0444' then 1 else 0 end) as REVENUE_CD_0444,
+max(case when  a.REVENUE_CD = '0440' then 1 else 0 end) as REVENUE_CD_0440,
+max(case when  a.REVENUE_CD = '0762' then 1 else 0 end) as REVENUE_CD_0762,
+max(case when  a.REVENUE_CD = '0391' then 1 else 0 end) as REVENUE_CD_0391,
+max(case when  a.REVENUE_CD not in ('0250','0301','0305','0300','0730','0450','0306','0424','0272','0324','0420','0320','0370','0307','0258','0434','0302','0270','0360','0430','0410',
+'0352','0278','0710','0636','0483','0351','0206','0460','0402','0260','0120','0121','0350','0921','0110','0361','0310','0390','0200','0255','0111',
+'0480','0444','0440','0762','0391') and a.REVENUE_CD is not null then 1 else 0 end) as REVENUE_CD_OTHERS,
+
+max(a.SRC_DRG_CD) as SRC_DRG_CD,
+max(a.SRC_CAUSE_CD) as SRC_CAUSE_CD,
+
+max(case when  a.OVERRIDE_CD = '00' then 1 else 0 end) as OVERRIDE_CD_00,
+max(case when  a.OVERRIDE_CD = '27' then 1 else 0 end) as OVERRIDE_CD_27,
+max(case when  a.OVERRIDE_CD = '09' then 1 else 0 end) as OVERRIDE_CD_09,
+max(case when  a.OVERRIDE_CD = '01' then 1 else 0 end) as OVERRIDE_CD_01,
+max(case when  a.OVERRIDE_CD = '16' then 1 else 0 end) as OVERRIDE_CD_16,
+max(case when  a.OVERRIDE_CD not in ('00','27','09','01','16')  then 1 else 0 end) as OVERRIDE_CD_OTHERS,
+
+max(case when  a.CTRCT_CAT_CD = '02' then 1 else 0 end) as CTRCT_CAT_CD_02,
+max(case when  a.CTRCT_CAT_CD = '03' then 1 else 0 end) as CTRCT_CAT_CD_03,
+max(case when  a.CTRCT_CAT_CD = '01' then 1 else 0 end) as CTRCT_CAT_CD_01,
+max(case when  a.CTRCT_CAT_CD = '04' then 1 else 0 end) as CTRCT_CAT_CD_04,
+max(case when  a.CTRCT_CAT_CD = '00' then 1 else 0 end) as CTRCT_CAT_CD_00,
+max(case when  a.CTRCT_CAT_CD = '06' then 1 else 0 end) as CTRCT_CAT_CD_06,
+max(case when  a.CTRCT_CAT_CD is null then 1 else 0 end) as CTRCT_CAT_CD_MISSING,
+max(case when  a.CTRCT_CAT_CD not in ('02','03','01','04','00','06') and a.CTRCT_CAT_CD is not null then 1 else 0 end) as CTRCT_CAT_CD_OTHERS,
+
+max(a.REIMB_METH_CD) as REIMB_METH_CD,
+
+max(a.ADMIT_SRC_CD) as ADMIT_SRC_CD,
+max(a.ADMIT_TYPE_CD) as ADMIT_TYPE_CD,
+
+max(case when  a."Mapping 2" is null then 1 else 0 end) as CPT_MISSING,
+max(case when  a."Mapping 2" = 'Office or Other Outpatient Services' then 1 else 0 end) as CPT_1,
+max(case when  a."Mapping 2" = 'Procedures Professional Services' then 1 else 0 end) as CPT_2,
+max(case when  a."Mapping 2" = 'Diagnostic Radiology (Diagnostic Imaging) Procedures' then 1 else 0 end) as CPT_3,
+max(case when  a."Mapping 2" = 'Drugs Administered Other than Oral Method' then 1 else 0 end) as CPT_4,
+max(case when  a."Mapping 2" = 'Surgical Procedures on the Musculoskeletal System' then 1 else 0 end) as CPT_5,
+max(case when  a."Mapping 2" = 'Surgical Procedures on the Cardiovascular System' then 1 else 0 end) as CPT_6,
+max(case when  a."Mapping 2" = 'Physical Medicine and Rehabilitation Evaluations' then 1 else 0 end) as CPT_7,
+max(case when  a."Mapping 2" = 'Surgical Pathology Procedures' then 1 else 0 end) as CPT_8,
+max(case when  a."Mapping 2" = 'Hospital Inpatient Services' then 1 else 0 end) as CPT_9,
+max(case when  a."Mapping 2" = 'Surgical Procedures on the Eye and Ocular Adnexa' then 1 else 0 end) as CPT_10,
+max(case when  a."Mapping 2" = 'Ambulance and Other Transport Services and Supplies' then 1 else 0 end) as CPT_11,
+max(case when  a."Mapping 2" = 'Cardiovascular Procedures' then 1 else 0 end) as CPT_12,
+max(case when  a."Mapping 2" = 'Chemistry Procedures' then 1 else 0 end) as CPT_13,
+max(case when  a."Mapping 2" = 'Surgical Procedures on the Integumentary System' then 1 else 0 end) as CPT_14,
+max(case when  a."Mapping 2" = 'Surgical Procedures on the Nervous System' then 1 else 0 end) as CPT_15,
+max(case when  a."Mapping 2" = 'Alcohol and Drug Abuse Treatment Services / Rehab Services' then 1 else 0 end) as CPT_16,
+max(case when  a."Mapping 2" = 'Hematology and Coagulation Procedures' then 1 else 0 end) as CPT_17,
+max(case when  a."Mapping 2" = 'Hydration' then 1 else 0 end) as CPT_18,
+max(case when  a."Mapping 2" = 'Organ or Disease Oriented Panels' then 1 else 0 end) as CPT_19,
+max(case when  a."Mapping 2" = 'Diagnostic Ultrasound Procedures' then 1 else 0 end) as CPT_20,
+max(case when  a."Mapping 2" = 'Prolonged Services' then 1 else 0 end) as CPT_21,
+max(case when  a."Mapping 2" = 'Established For State Medical Agencies' then 1 else 0 end) as CPT_22,
+max(case when  a."Mapping 2" = 'Preventive Medicine Services' then 1 else 0 end) as CPT_23,
+max(case when  a."Mapping 2" = 'Medical And Surgical Supplies' then 1 else 0 end) as CPT_24,
+max(case when  a."Mapping 2" = 'Commercial Payers (Temporary Codes)' then 1 else 0 end) as CPT_25,
+max(case when  a."Mapping 2" = 'Hospital Observation Services' then 1 else 0 end) as CPT_26,
+max(case when  a."Mapping 2" = 'Surgical Procedures on the Digestive System' then 1 else 0 end) as CPT_27,
+max(case when  a."Mapping 2" = 'Ophthalmology Services and Procedures' then 1 else 0 end) as CPT_28,
+max(case when  a."Mapping 2" = 'Administrative Miscellaneous and Investigational' then 1 else 0 end) as CPT_29,
+max(case when  a."Mapping 2" = 'Psychiatry Services and Procedures' then 1 else 0 end) as CPT_30,
+max(case when  a."Mapping 2" = 'Cytopathology Procedures' then 1 else 0 end) as CPT_31,
+max(case when  a."Mapping 2" = 'Vaccines' then 1 else 0 end) as CPT_32,
+max(case when  a."Mapping 2" = 'Microbiology Procedures' then 1 else 0 end) as CPT_33,
+max(case when  a."Mapping 2" = 'Miscellaneous Services (Temporary Codes)' then 1 else 0 end) as CPT_34,
+max(case when  a."Mapping 2" = 'Urinalysis Procedures' then 1 else 0 end) as CPT_35,
+max(case when  a."Mapping 2" = 'Emergency Department Services' then 1 else 0 end) as CPT_36,
+max(case when  a."Mapping 2" = 'Critical Care Services' then 1 else 0 end) as CPT_37,
+max(case when  a."Mapping 2" = 'Central Nervous System Assessments/Tests (eg' then 1 else 0 end) as CPT_38,
+max(case when  a."Mapping 2" = 'Health Behavior Assessment and Intervention Procedures' then 1 else 0 end) as CPT_39,
+max(case when  a."Mapping 2" = 'Chemotherapy Drugs' then 1 else 0 end) as CPT_40,
+max(case when  a."Mapping 2" = 'Immunology Procedures' then 1 else 0 end) as CPT_41,
+max(case when  a."Mapping 2" = 'Advance Care Planning Evaluation and Management Services' then 1 else 0 end) as CPT_42,
+max(case when  a."Mapping 2" = 'Anesthesia for Procedures on the Lower Abdomen' then 1 else 0 end) as CPT_43,
+max(case when  a."Mapping 2" = 'Surgical Procedures on the Respiratory System' then 1 else 0 end) as CPT_44,
+max(case when  a."Mapping 2" = 'Moderate (Conscious) Sedation' then 1 else 0 end) as CPT_45,
+max(case when  a."Mapping 2" not in ('Office or Other Outpatient Services','Procedures Professional Services','Diagnostic Radiology (Diagnostic Imaging) Procedures','Drugs Administered Other than Oral Method','Surgical Procedures on the Musculoskeletal System',
+'Surgical Procedures on the Cardiovascular System','Physical Medicine and Rehabilitation Evaluations','Surgical Pathology Procedures',
+'Hospital Inpatient Services','Surgical Procedures on the Eye and Ocular Adnexa','Ambulance and Other Transport Services and Supplies',
+'Cardiovascular Procedures','Chemistry Procedures','Surgical Procedures on the Integumentary System','Surgical Procedures on the Nervous System',
+'Alcohol and Drug Abuse Treatment Services / Rehab Services','Hematology and Coagulation Procedures','Hydration','Organ or Disease Oriented Panels',
+'Diagnostic Ultrasound Procedures','Prolonged Services','Established For State Medical Agencies','Preventive Medicine Services',
+'Medical And Surgical Supplies','Commercial Payers (Temporary Codes)','Hospital Observation Services','Surgical Procedures on the Digestive System',
+'Ophthalmology Services and Procedures','Administrative Miscellaneous and Investigational','Psychiatry Services and Procedures','Cytopathology Procedures',
+'Vaccines','Microbiology Procedures','Miscellaneous Services (Temporary Codes)','Urinalysis Procedures','Emergency Department Services',
+'Critical Care Services','Central Nervous System Assessments/Tests (eg','Health Behavior Assessment and Intervention Procedures','Chemotherapy Drugs',
+'Immunology Procedures','Advance Care Planning Evaluation and Management Services','Anesthesia for Procedures on the Lower Abdomen','Surgical Procedures on the Respiratory System',
+'Moderate (Conscious) Sedation') and a."Mapping 2" is not null then 1 else 0 end) as CPT_OTHERS,
+
+max(a.level_1) as PRIMARY_DIAG_CD,
+
+max(nvl2(a.DIAG_CD2 ,1,0) +
+nvl2(a.DIAG_CD3 ,1,0) +
+nvl2(a.DIAG_CD4 ,1,0) +
+nvl2(a.DIAG_CD5 ,1,0) +
+nvl2(a.DIAG_CD6 ,1,0) +
+nvl2(a.DIAG_CD7 ,1,0) +
+nvl2(a.DIAG_CD8 ,1,0) +
+nvl2(a.DIAG_CD9 ,1,0) +
+nvl2(a.DIAG_CD10 ,1,0)) as DIAG_CNT,
+
+max(a.PROV_TYPE_CD) as PROV_TYPE_CD,
+max(a.MBR_AGE) as MBR_AGE,
+max(a.CLIENT_NBR) as CLIENT_NBR,
+
+min(a.SERV_FROM_DATE) as SERV_FROM_DATE,
+max(a.SERV_TO_DATE) as SERV_TO_DATE,
+
+sum(a.CHRG_AMT) as CHRG_AMT,
+sum(a.PAID_AMT) as PAID_AMT,
+sum(a.DEDUCT_AMT) as DEDUCT_AMT,
+sum(a.MBR_COINS_AMT) as MBR_COINS_AMT,
+sum(a.MBR_COPAY_AMT) as MBR_COPAY_AMT,
+sum(a.MBR_RESP_AMT) as MBR_RESP_AMT,
+
+max(a.CTRCT_MOP_CD) as CTRCT_MOP_CD,
+max(a.SERV_STATE_CD) as SERV_STATE_CD,
+
+max(case when  a.SERV_TYPE_CD1 = '250' then 1 else 0 end) as SERV_TYPE_CD1_250,
+max(case when  a.SERV_TYPE_CD1 = '301' then 1 else 0 end) as SERV_TYPE_CD1_301,
+max(case when  a.SERV_TYPE_CD1 = '305' then 1 else 0 end) as SERV_TYPE_CD1_305,
+max(case when  a.SERV_TYPE_CD1 = '300' then 1 else 0 end) as SERV_TYPE_CD1_300,
+max(case when  a.SERV_TYPE_CD1 = '730' then 1 else 0 end) as SERV_TYPE_CD1_730,
+max(case when  a.SERV_TYPE_CD1 = '450' then 1 else 0 end) as SERV_TYPE_CD1_450,
+max(case when  a.SERV_TYPE_CD1 = '306' then 1 else 0 end) as SERV_TYPE_CD1_306,
+max(case when  a.SERV_TYPE_CD1 = '424' then 1 else 0 end) as SERV_TYPE_CD1_424,
+max(case when  a.SERV_TYPE_CD1 = '272' then 1 else 0 end) as SERV_TYPE_CD1_272,
+max(case when  a.SERV_TYPE_CD1 = '324' then 1 else 0 end) as SERV_TYPE_CD1_324,
+max(case when  a.SERV_TYPE_CD1 = '420' then 1 else 0 end) as SERV_TYPE_CD1_420,
+max(case when  a.SERV_TYPE_CD1 = '320' then 1 else 0 end) as SERV_TYPE_CD1_320,
+max(case when  a.SERV_TYPE_CD1 = '370' then 1 else 0 end) as SERV_TYPE_CD1_370,
+max(case when  a.SERV_TYPE_CD1 = '307' then 1 else 0 end) as SERV_TYPE_CD1_307,
+max(case when  a.SERV_TYPE_CD1 = '258' then 1 else 0 end) as SERV_TYPE_CD1_258,
+max(case when  a.SERV_TYPE_CD1 = '434' then 1 else 0 end) as SERV_TYPE_CD1_434,
+max(case when  a.SERV_TYPE_CD1 = '99214C' then 1 else 0 end) as SERV_TYPE_CD1_99214C,
+max(case when  a.SERV_TYPE_CD1 = '302' then 1 else 0 end) as SERV_TYPE_CD1_302,
+max(case when  a.SERV_TYPE_CD1 = '270' then 1 else 0 end) as SERV_TYPE_CD1_270,
+max(case when  a.SERV_TYPE_CD1 = '360' then 1 else 0 end) as SERV_TYPE_CD1_360,
+max(case when  a.SERV_TYPE_CD1 = '430' then 1 else 0 end) as SERV_TYPE_CD1_430,
+max(case when  a.SERV_TYPE_CD1 = '410' then 1 else 0 end) as SERV_TYPE_CD1_410,
+max(case when  a.SERV_TYPE_CD1 = '352' then 1 else 0 end) as SERV_TYPE_CD1_352,
+max(case when  a.SERV_TYPE_CD1 = '278' then 1 else 0 end) as SERV_TYPE_CD1_278,
+max(case when  a.SERV_TYPE_CD1 = '710' then 1 else 0 end) as SERV_TYPE_CD1_710,
+max(case when  a.SERV_TYPE_CD1 = '636' then 1 else 0 end) as SERV_TYPE_CD1_636,
+max(case when  a.SERV_TYPE_CD1 = 'INTST' then 1 else 0 end) as SERV_TYPE_CD1_INTST,
+max(case when  a.SERV_TYPE_CD1 = '483' then 1 else 0 end) as SERV_TYPE_CD1_483,
+max(case when  a.SERV_TYPE_CD1 = '351' then 1 else 0 end) as SERV_TYPE_CD1_351,
+max(case when  a.SERV_TYPE_CD1 = '206' then 1 else 0 end) as SERV_TYPE_CD1_206,
+max(case when  a.SERV_TYPE_CD1 = '460' then 1 else 0 end) as SERV_TYPE_CD1_460,
+max(case when  a.SERV_TYPE_CD1 = '402' then 1 else 0 end) as SERV_TYPE_CD1_402,
+max(case when  a.SERV_TYPE_CD1 = '99213C' then 1 else 0 end) as SERV_TYPE_CD1_99213C,
+max(case when  a.SERV_TYPE_CD1 = '260' then 1 else 0 end) as SERV_TYPE_CD1_260,
+max(case when  a.SERV_TYPE_CD1 = '120' then 1 else 0 end) as SERV_TYPE_CD1_120,
+max(case when  a.SERV_TYPE_CD1 = '121' then 1 else 0 end) as SERV_TYPE_CD1_121,
+max(case when  a.SERV_TYPE_CD1 = '350' then 1 else 0 end) as SERV_TYPE_CD1_350,
+max(case when  a.SERV_TYPE_CD1 = '921' then 1 else 0 end) as SERV_TYPE_CD1_921,
+max(case when  a.SERV_TYPE_CD1 = '110' then 1 else 0 end) as SERV_TYPE_CD1_110,
+max(case when  a.SERV_TYPE_CD1 = '361' then 1 else 0 end) as SERV_TYPE_CD1_361,
+max(case when  a.SERV_TYPE_CD1 = '310' then 1 else 0 end) as SERV_TYPE_CD1_310,
+max(case when  a.SERV_TYPE_CD1 = '390' then 1 else 0 end) as SERV_TYPE_CD1_390,
+max(case when  a.SERV_TYPE_CD1 = '200' then 1 else 0 end) as SERV_TYPE_CD1_200,
+max(case when  a.SERV_TYPE_CD1 = '255' then 1 else 0 end) as SERV_TYPE_CD1_255,
+max(case when  a.SERV_TYPE_CD1 = 'A0425B' then 1 else 0 end) as SERV_TYPE_CD1_A0425B,
+max(case when  a.SERV_TYPE_CD1 = '111' then 1 else 0 end) as SERV_TYPE_CD1_111,
+max(case when  a.SERV_TYPE_CD1 not in ('250','301','305','300','730','450','306','424','272','324','420','320','370','307','258','434','99214C','302','270','360','430','410','352','278',
+'710','636','INTST','483','351','206','460','402','99213C','260','120','121','350','921','110','361','310','390','200','255','A0425B','111') 
+and a.SERV_TYPE_CD1 is not null then 1 else 0 end) as SERV_TYPE_CD1_OTHERS,
+
+sum(a.SERV_UNIT_CNT) as SERV_UNIT_CNT,
+
+max(a.GROUPER_RULE_ID) as GROUPER_RULE_ID,
+max(b.MOD_CNT) as MOD_CNT
+
+from 
+(select a.*,b.level_1,c."Mapping 2" from fr_hgs_sandbox.KA_DUPLICATES_LINE_LEVEL_PREPAY_MODEL_1_DAILY_PREDICTION a
+left join fr_hgs_sandbox.icd_codes b
+on substr(a.primary_diag_cd, 1, 3) = b.request_id
+left join fr_hgs_sandbox.RC_HCPCS_CPT_MAPPING c
+on a.hcpcs_cpt4_base_cd1 = c."Code") a
+left join b
+on a.src_claim_nbr=b.src_claim_nbr
+
+group by a.SRC_CLAIM_NBR;
+
+
+---------------------------------------------------------------------------------------
+
+-----------------------------------------------------------------
+--1. =IF(MOD_CNT>5,5,MOD_CNT)
+--2. =DATEDIF(DATE(LEFT(EH2,4),MID(EH2,5,2),RIGHT(EH2,2)),DATE(LEFT(EI2,4),MID(EI2,5,2),RIGHT(EI2,2)),"d") ---SERV_DAYS
+   =IF(DATEDIF(DATE(LEFT(EH2,4),MID(EH2,5,2),RIGHT(EH2,2)),DATE(LEFT(EI2,4),MID(EI2,5,2),RIGHT(EI2,2)),"d")>30,"D",IF(DATEDIF(DATE(LEFT(EH2,4),MID(EH2,5,2),RIGHT(EH2,2)),DATE(LEFT(EI2,4),MID(EI2,5,2),RIGHT(EI2,2)),"d")>15,"C",IF(DATEDIF(DATE(LEFT(EH2,4),MID(EH2,5,2),RIGHT(EH2,2)),DATE(LEFT(EI2,4),MID(EI2,5,2),RIGHT(EI2,2)),"d")>8,"B","A")))  ---SERV_DAYS_GROUP
+
+--- =IF(DATEDIF(DATE(LEFT(EW2,4),MID(EW2,5,2),RIGHT(EW2,2)),DATE(LEFT(EX2,4),MID(EX2,5,2),RIGHT(EX2,2)),"d")>17,18,DATEDIF(DATE(LEFT(EW2,4),MID(EW2,5,2),RIGHT(EW2,2)),DATE(LEFT(EX2,4),MID(EX2,5,2),RIGHT(EX2,2)),"d"))
+
+
+----------------------------------------------------------------------------------------
+
+--=IF(T2=901507,1,IF(T2=901405,1,IF(T2=100508,1,IF(T2=900359,1,0))))
+
+
+

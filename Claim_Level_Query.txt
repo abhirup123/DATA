@@ -1,0 +1,245 @@
+create table fr_hgs_sandbox.KA_HH_DM_CLAIM_LEVEL as(
+select distinct a.SRC_CLAIM_NBR,
+
+max(case when  a.REVENUE_CD = '0023' then 1 else 0 end) as REVENUE_CD_0023,
+max(case when  a.REVENUE_CD = '0551' then 1 else 0 end) as REVENUE_CD_0551,
+max(case when  a.REVENUE_CD = '0421' then 1 else 0 end) as REVENUE_CD_0421,
+max(case when  a.REVENUE_CD = '0431' then 1 else 0 end) as REVENUE_CD_0431,
+max(case when  a.REVENUE_CD = '0270' then 1 else 0 end) as REVENUE_CD_0270,
+max(case when  a.REVENUE_CD = '0623' then 1 else 0 end) as REVENUE_CD_0623,
+max(case when  a.REVENUE_CD = '0561' then 1 else 0 end) as REVENUE_CD_0561,
+max(case when  a.REVENUE_CD = '0571' then 1 else 0 end) as REVENUE_CD_0571,
+max(case when  a.REVENUE_CD = '0441' then 1 else 0 end) as REVENUE_CD_0441,
+max(case when  a.REVENUE_CD = '0550' then 1 else 0 end) as REVENUE_CD_0550,
+max(case when  a.REVENUE_CD = '0420' then 1 else 0 end) as REVENUE_CD_0420,
+max(case when  a.REVENUE_CD not in ('0023','0551','0421','0431','0270','0623','0561','0571','0441','0550','0420') then 1 else 0 end) as REVENUE_CD_OTHERS,
+
+min(a.SERV_FROM_DATE_SKEY) as SERV_FROM_DATE_SKEY,
+max(a.SERV_TO_DATE_SKEY) as SERV_TO_DATE_SKEY,
+
+sum(a.CHRG_AMT) as CHRG_AMT,
+sum(a.NET_PAID_AMT) as NET_PAID_AMT,
+sum(a.DEDUCT_AMT) as DEDUCT_AMT,
+sum(a.MBR_COINS_AMT) as MBR_COINS_AMT,
+sum(a.MBR_COPAY_AMT) as MBR_COPAY_AMT,
+
+max(a.ADMIT_SRC_CD) as ADMIT_SRC_CD,
+max(a.PRIMARY_DIAG_CD_LEVEL_1) as PRIMARY_DIAG_CD_LEVEL_1,
+max(a.PRIMARY_DIAG_CD_LEVEL_2) as PRIMARY_DIAG_CD_LEVEL_2,
+
+max(case when  a.CPT_MAPPING = 'Procedures Professional Services' then 1 else 0 end) as CPT_MAPPING_1,
+max(case when  a.CPT_MAPPING = 'Miscellaneous Services (Temporary Codes)' then 1 else 0 end) as CPT_MAPPING_2,
+max(case when  a.CPT_MAPPING is null then 1 else 0 end) as CPT_MAPPING_3,
+max(case when  a.CPT_MAPPING = 'Medical And Surgical Supplies' then 1 else 0 end) as CPT_MAPPING_4,
+max(case when  a.CPT_MAPPING = 'Administrative Miscellaneous and Investigational' then 1 else 0 end) as CPT_MAPPING_5,
+max(case when  a.CPT_MAPPING not in ('Procedures Professional Services','Miscellaneous Services (Temporary Codes)','Medical And Surgical Supplies',
+'Administrative Miscellaneous and Investigational') and a.CPT_MAPPING is not null then 1 else 0 end) as CPT_MAPPING_OTHERS,
+
+max(case when  a.HIPPS_MAPPING = 'Early  - Institutional,MS Rehab ' then 1 else 0 end) as HIPPS_MAPPING_1,
+max(case when  a.HIPPS_MAPPING = 'Early Episode, 0-13 therapies, Clinical Severity Level 3' then 1 else 0 end) as HIPPS_MAPPING_2,
+max(case when  a.HIPPS_MAPPING = 'Late - Community,Wound ' then 1 else 0 end) as HIPPS_MAPPING_3,
+max(case when  a.HIPPS_MAPPING = 'Early  - Institutional,MMTA - Cardiac ' then 1 else 0 end) as HIPPS_MAPPING_4,
+max(case when  a.HIPPS_MAPPING = 'Early  - Institutional,MMTA - Respiratory ' then 1 else 0 end) as HIPPS_MAPPING_5,
+max(case when  a.HIPPS_MAPPING = 'Early  - Community,MS Rehab ' then 1 else 0 end) as HIPPS_MAPPING_6,
+max(case when  a.HIPPS_MAPPING = 'Early  - Institutional,Neuro ' then 1 else 0 end) as HIPPS_MAPPING_7,
+max(case when  a.HIPPS_MAPPING = 'Early  - Institutional,Wound ' then 1 else 0 end) as HIPPS_MAPPING_8,
+max(case when  a.HIPPS_MAPPING = 'Early  - Community,Wound ' then 1 else 0 end) as HIPPS_MAPPING_9,
+max(case when  a.HIPPS_MAPPING = 'Early  - Community,MMTA - Other ' then 1 else 0 end) as HIPPS_MAPPING_10,
+max(case when  a.HIPPS_MAPPING = 'Early  - Community,Neuro ' then 1 else 0 end) as HIPPS_MAPPING_11,
+max(case when  a.HIPPS_MAPPING = 'Early  - Institutional,MMTA - Surgical Aftercare ' then 1 else 0 end) as HIPPS_MAPPING_12,
+max(case when  a.HIPPS_MAPPING = 'Early  - Institutional,MMTA - GI/GU  ' then 1 else 0 end) as HIPPS_MAPPING_13,
+max(case when  a.HIPPS_MAPPING = 'Early  - Institutional,MMTA - Infectious ' then 1 else 0 end) as HIPPS_MAPPING_14,
+max(case when  a.HIPPS_MAPPING = 'Early  - Community,MMTA - Cardiac ' then 1 else 0 end) as HIPPS_MAPPING_15,
+max(case when  a.HIPPS_MAPPING = 'Early  - Institutional,MMTA - Endocrine ' then 1 else 0 end) as HIPPS_MAPPING_16,
+max(case when  a.HIPPS_MAPPING = 'Late - Community,MMTA - Cardiac ' then 1 else 0 end) as HIPPS_MAPPING_17,
+max(case when  a.HIPPS_MAPPING = 'Late - Community,Neuro ' then 1 else 0 end) as HIPPS_MAPPING_18,
+max(case when  a.HIPPS_MAPPING = 'Early Episode, 14-19 therapies, Clinical Severity Level 2' then 1 else 0 end) as HIPPS_MAPPING_19,
+max(case when  a.HIPPS_MAPPING = 'Early  - Community,MMTA - Endocrine ' then 1 else 0 end) as HIPPS_MAPPING_20,
+max(case when  a.HIPPS_MAPPING = 'Early or Late Episode, 20+ therapies, Clinical Severity Level 2' then 1 else 0 end) as HIPPS_MAPPING_21,
+max(case when  a.HIPPS_MAPPING = 'Late - Community,MS Rehab ' then 1 else 0 end) as HIPPS_MAPPING_22,
+max(case when  a.HIPPS_MAPPING = 'Early Episode, 0-13 therapies, Clinical Severity Level 2' then 1 else 0 end) as HIPPS_MAPPING_23,
+max(case when  a.HIPPS_MAPPING is null then 1 else 0 end) as HIPPS_MAPPING_24,
+max(case when  a.HIPPS_MAPPING = 'Early Episode, 14-19 therapies, Clinical Severity Level 3' then 1 else 0 end) as HIPPS_MAPPING_25,
+max(case when  a.HIPPS_MAPPING = 'Early  - Institutional,MMTA - Other ' then 1 else 0 end) as HIPPS_MAPPING_26,
+max(case when  a.HIPPS_MAPPING = 'Late - Institutional,MMTA - Cardiac ' then 1 else 0 end) as HIPPS_MAPPING_27,
+max(case when  a.HIPPS_MAPPING = 'Late - Institutional,Wound ' then 1 else 0 end) as HIPPS_MAPPING_28,
+max(case when  a.HIPPS_MAPPING = 'Late - Community,MMTA - Endocrine ' then 1 else 0 end) as HIPPS_MAPPING_29,
+max(case when  a.HIPPS_MAPPING = 'Early  - Community,MMTA - Respiratory ' then 1 else 0 end) as HIPPS_MAPPING_30,
+max(case when  a.HIPPS_MAPPING = 'Late - Institutional,MMTA - Respiratory ' then 1 else 0 end) as HIPPS_MAPPING_31,
+max(case when  a.HIPPS_MAPPING = 'Early or Late Episode, 20+ therapies, Clinical Severity Level 1' then 1 else 0 end) as HIPPS_MAPPING_32,
+max(case when  a.HIPPS_MAPPING = 'Late - Institutional,MS Rehab ' then 1 else 0 end) as HIPPS_MAPPING_33,
+max(case when  a.HIPPS_MAPPING = 'Early Episode, 14-19 therapies, Clinical Severity Level 1' then 1 else 0 end) as HIPPS_MAPPING_34,
+max(case when  a.HIPPS_MAPPING = 'Late Episode, 0-13 therapies, Clinical Severity Level 3' then 1 else 0 end) as HIPPS_MAPPING_35,
+max(case when  a.HIPPS_MAPPING = 'Early or Late Episode, 20+ therapies, Clinical Severity Level 3' then 1 else 0 end) as HIPPS_MAPPING_36,
+max(case when  a.HIPPS_MAPPING = 'Late - Community,MMTA - Respiratory ' then 1 else 0 end) as HIPPS_MAPPING_37,
+max(case when  a.HIPPS_MAPPING = 'OTHERS' then 1 else 0 end) as HIPPS_MAPPING_38,
+max(case when  a.HIPPS_MAPPING = 'Early  - Community,MMTA - Infectious ' then 1 else 0 end) as HIPPS_MAPPING_39,
+max(case when  a.HIPPS_MAPPING = 'Early Episode, 0-13 therapies, Clinical Severity Level 1' then 1 else 0 end) as HIPPS_MAPPING_40,
+max(case when  a.HIPPS_MAPPING not in ('Early  - Institutional,MS Rehab ','Early Episode, 0-13 therapies, Clinical Severity Level 3','Late - Community,Wound ',
+'Early  - Institutional,MMTA - Cardiac ','Early  - Institutional,MMTA - Respiratory ','Early  - Community,MS Rehab ',
+'Early  - Institutional,Neuro ','Early  - Institutional,Wound ','Early  - Community,Wound ','Early  - Community,MMTA - Other ',
+'Early  - Community,Neuro ','Early  - Institutional,MMTA - Surgical Aftercare ','Early  - Institutional,MMTA - GI/GU  ',
+'Early  - Institutional,MMTA - Infectious ','Early  - Community,MMTA - Cardiac ','Early  - Institutional,MMTA - Endocrine ',
+'Late - Community,MMTA - Cardiac ','Late - Community,Neuro ','Early Episode, 14-19 therapies, Clinical Severity Level 2',
+'Early  - Community,MMTA - Endocrine ','Early or Late Episode, 20+ therapies, Clinical Severity Level 2','Late - Community,MS Rehab ',
+'Early Episode, 0-13 therapies, Clinical Severity Level 2','Early Episode, 14-19 therapies, Clinical Severity Level 3','Early  - Institutional,MMTA - Other ',
+'Late - Institutional,MMTA - Cardiac ','Late - Institutional,Wound ','Late - Community,MMTA - Endocrine ','Early  - Community,MMTA - Respiratory ',
+'Late - Institutional,MMTA - Respiratory ','Early or Late Episode, 20+ therapies, Clinical Severity Level 1','Late - Institutional,MS Rehab ',
+'Early Episode, 14-19 therapies, Clinical Severity Level 1','Late Episode, 0-13 therapies, Clinical Severity Level 3',
+'Early or Late Episode, 20+ therapies, Clinical Severity Level 3','Late - Community,MMTA - Respiratory ','OTHERS','Early  - Community,MMTA - Infectious ',
+'Early Episode, 0-13 therapies, Clinical Severity Level 1') and a.HIPPS_MAPPING is not null then 1 else 0 end) as HIPPS_MAPPING_OTHERS,
+
+max(a.SRC_LOB_CD) as SRC_LOB_CD,
+max(a.SRC_CAUSE_CD) as SRC_CAUSE_CD,
+
+max(case when  a.OVERRIDE_CD = '27' then 1 else 0 end) as OVERRIDE_CD_27,
+max(case when  a.OVERRIDE_CD = '00' then 1 else 0 end) as OVERRIDE_CD_00,
+max(case when  a.OVERRIDE_CD = '09' then 1 else 0 end) as OVERRIDE_CD_09,
+max(case when  a.OVERRIDE_CD = '37' then 1 else 0 end) as OVERRIDE_CD_37,
+max(case when  a.OVERRIDE_CD = '01' then 1 else 0 end) as OVERRIDE_CD_01,
+max(case when  a.OVERRIDE_CD is null then 1 else 0 end) as OVERRIDE_CD_MISSING,
+max(case when  a.OVERRIDE_CD not in ('27','00','09','37','01') and a.OVERRIDE_CD is not null then 1 else 0 end) as OVERRIDE_CD_OTHERS,
+
+max(case when  a.CTRCT_CAT_CD = '04' then 1 else 0 end) as CTRCT_CAT_CD_04,
+max(case when  a.CTRCT_CAT_CD = '01' then 1 else 0 end) as CTRCT_CAT_CD_01,
+max(case when  a.CTRCT_CAT_CD = '06' then 1 else 0 end) as CTRCT_CAT_CD_06,
+max(case when  a.CTRCT_CAT_CD is null then 1 else 0 end) as CTRCT_CAT_CD_MISSING,
+max(case when  a.CTRCT_CAT_CD not in ('04','01','06') and a.CTRCT_CAT_CD is not null then 1 else 0 end) as CTRCT_CAT_CD_OTHERS,
+
+max(a.MBR_AGE) as MBR_AGE,
+max(a.CLIENT_NBR) as CLIENT_NBR,
+
+max(case when  a.SRC_SERV_TYPE_CD1 = '023' then 1 else 0 end) as SRC_SERV_TYPE_CD1_023,
+max(case when  a.SRC_SERV_TYPE_CD1 = '551' then 1 else 0 end) as SRC_SERV_TYPE_CD1_551,
+max(case when  a.SRC_SERV_TYPE_CD1 = '421' then 1 else 0 end) as SRC_SERV_TYPE_CD1_421,
+max(case when  a.SRC_SERV_TYPE_CD1 = '431' then 1 else 0 end) as SRC_SERV_TYPE_CD1_431,
+max(case when  a.SRC_SERV_TYPE_CD1 = '623' then 1 else 0 end) as SRC_SERV_TYPE_CD1_623,
+max(case when  a.SRC_SERV_TYPE_CD1 = '270' then 1 else 0 end) as SRC_SERV_TYPE_CD1_270,
+max(case when  a.SRC_SERV_TYPE_CD1 = '561' then 1 else 0 end) as SRC_SERV_TYPE_CD1_561,
+max(case when  a.SRC_SERV_TYPE_CD1 = '571' then 1 else 0 end) as SRC_SERV_TYPE_CD1_571,
+max(case when  a.SRC_SERV_TYPE_CD1 = '441' then 1 else 0 end) as SRC_SERV_TYPE_CD1_441,
+max(case when  a.SRC_SERV_TYPE_CD1 = '550' then 1 else 0 end) as SRC_SERV_TYPE_CD1_550,
+max(case when  a.SRC_SERV_TYPE_CD1 = '420' then 1 else 0 end) as SRC_SERV_TYPE_CD1_420,
+max(case when  a.SRC_SERV_TYPE_CD1 = '430' then 1 else 0 end) as SRC_SERV_TYPE_CD1_430,
+max(case when  a.SRC_SERV_TYPE_CD1 not in ('023','551','421','431','623','270','561','571','441','550','420','430') 
+then 1 else 0 end) as SRC_SERV_TYPE_CD1_OTHERS,
+
+max(case when  a.SRC_SERV_TYPE_CD2 = 'Q5001' then 1 else 0 end) as SRC_SERV_TYPE_CD2_Q5001,
+max(case when  a.SRC_SERV_TYPE_CD2 = 'G0151' then 1 else 0 end) as SRC_SERV_TYPE_CD2_G0151,
+max(case when  a.SRC_SERV_TYPE_CD2 = 'G0299' then 1 else 0 end) as SRC_SERV_TYPE_CD2_G0299,
+max(case when  a.SRC_SERV_TYPE_CD2 = 'G0152' then 1 else 0 end) as SRC_SERV_TYPE_CD2_G0152,
+max(case when  a.SRC_SERV_TYPE_CD2 = 'G0300' then 1 else 0 end) as SRC_SERV_TYPE_CD2_G0300,
+max(case when  a.SRC_SERV_TYPE_CD2 = 'G0157' then 1 else 0 end) as SRC_SERV_TYPE_CD2_G0157,
+max(case when  a.SRC_SERV_TYPE_CD2 = 'G0155' then 1 else 0 end) as SRC_SERV_TYPE_CD2_G0155,
+max(case when  a.SRC_SERV_TYPE_CD2 = 'G0156' then 1 else 0 end) as SRC_SERV_TYPE_CD2_G0156,
+max(case when  a.SRC_SERV_TYPE_CD2 = 'G0158' then 1 else 0 end) as SRC_SERV_TYPE_CD2_G0158,
+max(case when  a.SRC_SERV_TYPE_CD2 = 'G0153' then 1 else 0 end) as SRC_SERV_TYPE_CD2_G0153,
+max(case when  a.SRC_SERV_TYPE_CD2 = 'G0493' then 1 else 0 end) as SRC_SERV_TYPE_CD2_G0493,
+max(case when  a.SRC_SERV_TYPE_CD2 = 'G0495' then 1 else 0 end) as SRC_SERV_TYPE_CD2_G0495,
+max(case when  a.SRC_SERV_TYPE_CD2 = 'Q5002' then 1 else 0 end) as SRC_SERV_TYPE_CD2_Q5002,
+max(case when  a.SRC_SERV_TYPE_CD2 = '1AA11' then 1 else 0 end) as SRC_SERV_TYPE_CD2_1AA11,
+max(case when  a.SRC_SERV_TYPE_CD2 = '2EC11' then 1 else 0 end) as SRC_SERV_TYPE_CD2_2EC11,
+max(case when  a.SRC_SERV_TYPE_CD2 = '2EC21' then 1 else 0 end) as SRC_SERV_TYPE_CD2_2EC21,
+max(case when  a.SRC_SERV_TYPE_CD2 = '2HC21' then 1 else 0 end) as SRC_SERV_TYPE_CD2_2HC21,
+max(case when  a.SRC_SERV_TYPE_CD2 not in ('Q5001','G0151','G0299','G0152','G0300','G0157','G0155','G0156','G0158','G0153','G0493',
+'G0495','Q5002','1AA11','2EC11','2EC21','2HC21') then 1 else 0 end) as SRC_SERV_TYPE_CD2_OTHERS,
+
+max(case when  a.PAYEE_CD = '5' then 1 else 0 end) as PAYEE_CD_5,
+max(case when  a.PAYEE_CD = 'R' then 1 else 0 end) as PAYEE_CD_R,
+max(case when  a.PAYEE_CD = '9' then 1 else 0 end) as PAYEE_CD_9,
+max(case when  a.PAYEE_CD = 'I' then 1 else 0 end) as PAYEE_CD_I,
+max(case when  a.PAYEE_CD = 'H' then 1 else 0 end) as PAYEE_CD_H,
+max(case when  a.PAYEE_CD not in ('5','R','9','I','H') then 1 else 0 end) as PAYEE_CD_OTHERS,
+
+max(case when  a.REASON_CD1 = '8A0DC' then 1 else 0 end) as REASON_CD1_8A0DC,
+max(case when  a.REASON_CD1 = '8A21Q' then 1 else 0 end) as REASON_CD1_8A21Q,
+max(case when  a.REASON_CD1 is null then 1 else 0 end) as REASON_CD1_MISSING,
+max(case when  a.REASON_CD1 = '8B52R' then 1 else 0 end) as REASON_CD1_8B52R,
+max(case when  a.REASON_CD1 = '8A52Q' then 1 else 0 end) as REASON_CD1_8A52Q,
+max(case when  a.REASON_CD1 = '8 21Q' then 1 else 0 end) as REASON_CD1_8_21Q,
+max(case when  a.REASON_CD1 = '7A0DC' then 1 else 0 end) as REASON_CD1_7A0DC,
+max(case when  a.REASON_CD1 = '8A29T' then 1 else 0 end) as REASON_CD1_8A29T,
+max(case when  a.REASON_CD1 = '8A46R' then 1 else 0 end) as REASON_CD1_8A46R,
+max(case when  a.REASON_CD1 = '7A21Q' then 1 else 0 end) as REASON_CD1_7A21Q,
+max(case when  a.REASON_CD1 = '8 0UC' then 1 else 0 end) as REASON_CD1_8_0UC,
+max(case when  a.REASON_CD1 = '6A0DC' then 1 else 0 end) as REASON_CD1_6A0DC,
+max(case when  a.REASON_CD1 = '8A04)' then 1 else 0 end) as REASON_CD1_8A04,
+max(case when  a.REASON_CD1 = '8B0T%' then 1 else 0 end) as REASON_CD1_8B0T,
+max(case when  a.REASON_CD1 = '6A21Q' then 1 else 0 end) as REASON_CD1_6A21Q,
+max(case when  a.REASON_CD1 = '8B088' then 1 else 0 end) as REASON_CD1_8B088,
+max(case when  a.REASON_CD1 = '7B52R' then 1 else 0 end) as REASON_CD1_7B52R,
+max(case when  a.REASON_CD1 = '8B07A' then 1 else 0 end) as REASON_CD1_8B07A,
+max(case when  a.REASON_CD1 = '7A52Q' then 1 else 0 end) as REASON_CD1_7A52Q,
+max(case when  a.REASON_CD1 = '7A29T' then 1 else 0 end) as REASON_CD1_7A29T,
+max(case when  a.REASON_CD1 = '8A54O' then 1 else 0 end) as REASON_CD1_8A54O,
+max(case when  a.REASON_CD1 = '8 52Q' then 1 else 0 end) as REASON_CD1_8_52Q,
+max(case when  a.REASON_CD1 = '8B0YU' then 1 else 0 end) as REASON_CD1_8B0YU,
+max(case when  a.REASON_CD1 = '7 21Q' then 1 else 0 end) as REASON_CD1_7_21Q,
+max(case when  a.REASON_CD1 = '8B21R' then 1 else 0 end) as REASON_CD1_8B21R,
+max(case when  a.REASON_CD1 = '7A04)' then 1 else 0 end) as REASON_CD1_7B07A,
+max(case when  a.REASON_CD1 not in ('8A0DC','8A21Q','8B52R','8A52Q','8 21Q','7A0DC','8A29T','8A46R','7A21Q','8 0UC','6A0DC','8A04)','8B0T%','6A21Q','8B088','7B52R','8B07A','7A52Q',
+'7A29T','8A54O','8 52Q','8B0YU','7 21Q','8B21R','7A04)') and a.REASON_CD1 is not null then 1 else 0 end) as REASON_CD1_OTHERS,
+
+max(a.ADMIT_TYPE_CD) as ADMIT_TYPE_CD,
+
+max(nvl2(a.DIAG_CD2 ,1,0) +
+nvl2(a.DIAG_CD3 ,1,0) +
+nvl2(a.DIAG_CD4 ,1,0) +
+nvl2(a.DIAG_CD5 ,1,0) +
+nvl2(a.DIAG_CD6 ,1,0) +
+nvl2(a.DIAG_CD7 ,1,0) +
+nvl2(a.DIAG_CD8 ,1,0) +
+nvl2(a.DIAG_CD9 ,1,0) +
+nvl2(a.DIAG_CD10 ,1,0)) as DIAG_CNT,
+
+max(case when  a.PROV_TYPE_CD = 'HH' then 1 else 0 end) as PROV_TYPE_CD_HH,
+max(case when  a.PROV_TYPE_CD = 'VENDOR' then 1 else 0 end) as PROV_TYPE_CD_VENDOR,
+max(case when  a.PROV_TYPE_CD = 'RN' then 1 else 0 end) as PROV_TYPE_CD_RN,
+max(case when  a.PROV_TYPE_CD = 'SS' then 1 else 0 end) as PROV_TYPE_CD_SS,
+max(case when  a.PROV_TYPE_CD = 'MD' then 1 else 0 end) as PROV_TYPE_CD_MD,
+max(case when  a.PROV_TYPE_CD not in ('HH','VENDOR','RN','SS','MD') then 1 else 0 end) as PROV_TYPE_CD_OTHERS,
+
+max(case when  a.CTRCT_MOP_CD = 'PS' then 1 else 0 end) as CTRCT_MOP_CD_PS,
+max(case when  a.CTRCT_MOP_CD = 'PV' then 1 else 0 end) as CTRCT_MOP_CD_PV,
+max(case when  a.CTRCT_MOP_CD = 'PC' then 1 else 0 end) as CTRCT_MOP_CD_PC,
+max(case when  a.CTRCT_MOP_CD is null then 1 else 0 end) as CTRCT_MOP_CD_MISSING,
+max(case when  a.CTRCT_MOP_CD not in ('PS','PV','PC') and a.CTRCT_MOP_CD is not null then 1 else 0 end) as CTRCT_MOP_CD_OTHERS,
+
+max(a.SERV_STATE_CD) as SERV_STATE_CD,
+
+max(case when  a.PROV_SOURCE_CD = 'CAS' then 1 else 0 end) as PROV_SOURCE_CD_CAS,
+max(case when  a.PROV_SOURCE_CD = 'ARC' then 1 else 0 end) as PROV_SOURCE_CD_ARC,
+max(case when  a.PROV_SOURCE_CD = 'MTV' then 1 else 0 end) as PROV_SOURCE_CD_MTV,
+max(case when  a.PROV_SOURCE_CD not in ('CAS','ARC','MTV') then 1 else 0 end) as PROV_SOURCE_CD_OTHERS,
+
+max(case when  a.REIMB_METH_CD = 'APC' then 1 else 0 end) as REIMB_METH_CD_APC,
+max(case when  a.REIMB_METH_CD = 'PCE' then 1 else 0 end) as REIMB_METH_CD_PCE,
+max(case when  a.REIMB_METH_CD = 'FFL' then 1 else 0 end) as REIMB_METH_CD_FFL,
+max(case when  a.REIMB_METH_CD is null then 1 else 0 end) as REIMB_METH_CD_MISSING,
+max(case when  a.REIMB_METH_CD = 'PRV' then 1 else 0 end) as REIMB_METH_CD_PRV,
+max(case when  a.REIMB_METH_CD not in ('CAS','ARC','MTV') and a.REIMB_METH_CD is not null then 1 else 0 end) as REIMB_METH_CD_OTHERS,
+
+max(a.PROV_TAX_ID) as PROV_TAX_ID,
+max(a.NPI_ID) as NPI_ID,
+max(a.STATUS) as STATUS
+
+from 
+(select a.*,b."Level" as HIPPS_MAPPING,c."Mapping 1" as CPT_MAPPING,
+d.level_1 as PRIMARY_DIAG_CD_LEVEL_1,d.level_2 as PRIMARY_DIAG_CD_LEVEL_2
+from fr_hgs_sandbox.KA_HH_DM_LINE_LEVEL a
+left join KA_HIPPS_CODE_MAPPING b
+on a.hcpcs_cpt4_base_cd1 = b.hcpcs_cpt4_base_cd1
+left join fr_hgs_sandbox.RC_HCPCS_CPT_MAPPING c
+on a.hcpcs_cpt4_base_cd1 = c."Code"
+left join fr_hgs_sandbox.icd_codes d
+on substr(a.primary_diag_cd, 1, 3) = d.request_id) a
+
+group by a.src_claim_nbr);
+
+
+grant all on fr_hgs_sandbox.KA_HIPPS_CODE_MAPPING to JAS2894,RKS6701,KPA2877,SNN8257,AMS4580;
+grant all on fr_hgs_sandbox.RC_HCPCS_CPT_MAPPING to JAS2894,RKS6701,KPA2877,SNN8257,AMS4580;
+grant all on fr_hgs_sandbox.icd_codes to JAS2894,RKS6701,KPA2877,SNN8257,AMS4580;
+grant all on fr_hgs_sandbox.KA_HH_DM_CLAIM_LEVEL to JAS2894,RKS6701,KPA2877,SNN8257,AMS4580;
+
+select * from fr_hgs_sandbox.KA_HH_DM_CLAIM_LEVEL;

@@ -1,0 +1,126 @@
+
+--delete from fr_hgs_sandbox.KA_HH_DM_LINE_LEVEL;
+--commit;
+insert into fr_hgs_sandbox.KA_HH_DM_LINE_LEVEL
+with x1 as
+(select /*+ parallel(MLF,4) */ 
+distinct MLF.Src_Claim_Nbr,MLF.Medclm_Key,
+MLF.Action_Timestamp,
+MLF.Clm_Receipt_Date_Skey,
+MLF.Pot_Cd,
+MLF.Bill_Type_Cd,
+MLF.Revenue_Cd,
+MLF.Src_Platform_Cd,
+MLF.Src_Admit_Date_Skey,
+MLF.Src_Dischrg_Date_Skey,
+MLF.Prov_Tax_Id,
+MLF.Npi_Id,
+MLF.Serv_From_Date_Skey,
+MLF.Serv_To_Date_Skey,
+MLF.Serv_Unit_Cnt,
+MLF.Allow_Icob_Amt,
+MLF.Chrg_Amt,
+MLF.Net_Paid_Amt,
+MLF.Fin_Recov_Amt,
+MLF.Deduct_Amt,
+MLF.Coins_Amt as Mbr_Coins_Amt,
+MLF.Copay_Amt as Mbr_Copay_Amt,
+MLF.Mbr_Cost_Shr_Amt as MBR_RESP_AMT,
+MLF.Admit_Src_Cd,
+MLF.Primary_Diag_Cd,
+MLF.Hcpcs_Cpt4_Base_Cd1,
+MLF.Cpt_Mod_Cd,
+MLF.Cis_Contract_Key,
+b.status
+from edw_prod.MEDCLM_DLY_LINE_FACT MLF 
+join fr_hgs_sandbox.KA_HH_DM_STATUS_MAPPER_2 b
+on MLF.src_claim_nbr=cast(b.src_claim_nbr as varchar2(20))
+where MLF.src_claim_nbr in (select distinct cast(src_claim_nbr as varchar2(20)) from 
+fr_hgs_sandbox.KA_HH_DM_STATUS_MAPPER_2 where SLNO between 1 and 821078))
+select /*+  parallel(ML,4) parallel(MS,4) parallel(pd,4) parallel(CC,4) */ 
+distinct x1.Src_Claim_Nbr,
+x1.Action_Timestamp,
+x1.Clm_Receipt_Date_Skey,
+MS.Process_Date,
+x1.Pot_Cd,
+x1.Bill_Type_Cd,
+x1.Revenue_Cd,
+x1.Src_Platform_Cd,
+x1.Src_Admit_Date_Skey,
+x1.Src_Dischrg_Date_Skey,
+x1.Prov_Tax_Id,
+x1.Npi_Id,
+x1.Serv_From_Date_Skey,
+x1.Serv_To_Date_Skey,
+x1.Serv_Unit_Cnt,
+x1.Allow_Icob_Amt,
+x1.Chrg_Amt,
+x1.Net_Paid_Amt,
+x1.Fin_Recov_Amt,
+x1.Deduct_Amt,
+x1.Mbr_Coins_Amt,
+x1.Mbr_Copay_Amt,
+x1.MBR_RESP_AMT,
+x1.Admit_Src_Cd,
+x1.Primary_Diag_Cd,
+x1.Hcpcs_Cpt4_Base_Cd1,
+x1.Cpt_Mod_Cd,
+MS.Cpt_Mod_Cd2,
+MS.Cpt_Mod_Cd3,
+MS.Cpt_Mod_Cd4,
+MS.Cpt_Mod_Cd5,
+MS.Src_Lob_Cd,
+MS.Src_Clm_Type_Cd,
+MS.Src_Cause_Cd,
+MS.Override_Cd,
+MS.Ctrct_Cat_Cd,
+MS.Mbr_Age,
+MS.Client_Nbr,
+MS.Src_Serv_Type_Cd1,
+MS.Src_Serv_Type_Cd2,
+MS.Payee_Cd,
+MS.Cob_Status_Cd,
+ML.Allow_Ex_Cd,
+ML.Denied_Ex_Cd,
+ML.reason_cd1,
+ML.reason_cd2,
+ML.reason_cd3,
+ML.reason_cd4,
+ML.reason_cd5,
+ML.Admit_Type_Cd,
+ML.diag_cd2,
+ML.diag_cd3,
+ML.diag_cd4,
+ML.diag_cd5,
+ML.diag_cd6,
+ML.diag_cd7,
+ML.diag_cd8,
+ML.diag_cd9,
+ML.diag_cd10,
+pd.prov_type_cd,
+ML.Ctrct_Mop_Cd,
+coalesce (SERV_STATE_CD , BILL_STATE_CD) as SERV_STATE_CD,
+pd.prov_source_cd,
+CC.Reimb_Meth_Cd,
+CC.Contract_Eff_Date,
+CC.Contract_Term_Date,
+cc.serv_cat_type_cd,
+cc.contract_type_cd,
+x1.status
+from 
+x1
+join edw_prod.MEDCLM_DLY_LINE_SECONDARY MS
+on x1.Medclm_Key=MS.Medclm_Key
+join edw_prod.MEDCLM_DLY_LINE ML
+on x1.Medclm_Key=ML.Medclm_Key
+join edw_prod.CIS_CONTRACT CC
+on x1.Cis_Contract_Key =cc.cis_contract_key
+join edw_prod.src_provider_dly   pd
+on MS.Src_Provider_Id = pd.src_provider_id;
+
+commit;
+
+grant all on fr_hgs_sandbox.KA_HH_DM_LINE_LEVEL to JAS2894,RKS6701,KPA2877,SNN8257,AMS4580;
+grant all on fr_hgs_sandbox.KA_HH_DM_STATUS_MAPPER to JAS2894,RKS6701,KPA2877,SNN8257,AMS4580;
+grant all on fr_hgs_sandbox.KA_HH_DM_STATUS_MAPPER_2 to JAS2894,RKS6701,KPA2877,SNN8257,AMS4580;
+

@@ -1,0 +1,116 @@
+select dm.lob from fr_dm_pro.fr_datamart_medclms dm;
+select * from fr_opr_pro.fr_audit_history_claims   hc;
+select * from edw_prod.MEDCLM_DLY_LINE_SECONDARY MS;
+select * from fr_hgs_sandbox.icd_codes  icd;
+select * from edw_prod.MEDCLM_DLY_LINE_FACT MLF;
+select * from edw_prod.src_provider_dly   pd;
+select * from edw_prod.CIS_CONTRACT CC;
+select  from edw_prod.MEDCLM_DLY_LINE ML;
+---------------------------------------------------------------------
+
+
+create table fr_hgs_sandbox.KA_HH_DM_STATUS_MAPPER_2 as(
+select SRC_CLAIM_NBR,Action_Timestamp,STATUS,ROW_NUMBER() OVER (ORDER BY  SRC_CLAIM_NBR) SLNO 
+from fr_hgs_sandbox.KA_HH_DM_STATUS_MAPPER);
+
+select * from FR_HGS_SANDBOX.KA_HH_DM_STATUS_MAPPER;
+
+select count(*),max(SLNO) from fr_hgs_sandbox.KA_HH_DM_STATUS_MAPPER_2;
+
+
+----------------------------------------------------------------
+delete from fr_hgs_sandbox.KA_HH_DM_LINE_LEVEL;
+commit;
+create table fr_hgs_sandbox.KA_HH_DM_LINE_LEVEL as(
+select /*+  parallel(b,8) parallel(dm,8) parallel(hc,8) parallel(MS,8) parallel(icd,8) parallel(MLF,8) parallel(pd,8) parallel(CC,8) */
+distinct MLF.Src_Claim_Nbr,
+MLF.Action_Timestamp,
+MLF.Clm_Receipt_Date_Skey,
+MS.Process_Date,
+MLF.Pot_Cd,
+MLF.Bill_Type_Cd,
+MLF.Revenue_Cd,
+MLF.Src_Platform_Cd,
+MLF.Src_Admit_Date_Skey,
+MLF.Src_Dischrg_Date_Skey,
+MLF.Prov_Tax_Id,
+MLF.Npi_Id,
+MLF.Serv_From_Date_Skey,
+MLF.Serv_To_Date_Skey,
+MLF.Serv_Unit_Cnt,
+MLF.Allow_Icob_Amt,
+MLF.Chrg_Amt,
+MLF.Net_Paid_Amt,
+MLF.Fin_Recov_Amt,
+MLF.Deduct_Amt,
+MLF.Coins_Amt as Mbr_Coins_Amt,
+MLF.Copay_Amt as Mbr_Copay_Amt,
+MLF.Mbr_Cost_Shr_Amt as MBR_RESP_AMT,
+MLF.Admit_Src_Cd,
+MLF.Primary_Diag_Cd,
+MLF.Hcpcs_Cpt4_Base_Cd1,
+MLF.Cpt_Mod_Cd,
+MS.Cpt_Mod_Cd2,
+MS.Cpt_Mod_Cd3,
+MS.Cpt_Mod_Cd4,
+MS.Cpt_Mod_Cd5,
+MS.Src_Lob_Cd,
+MS.Src_Clm_Type_Cd,
+MS.Src_Cause_Cd,
+MS.Override_Cd,
+MS.Ctrct_Cat_Cd,
+MS.Mbr_Age,
+MS.Client_Nbr,
+MS.Src_Serv_Type_Cd1,
+MS.Src_Serv_Type_Cd2,
+MS.Payee_Cd,
+MS.Cob_Status_Cd,
+ML.Allow_Ex_Cd,
+ML.Denied_Ex_Cd,
+ML.reason_cd1,
+ML.reason_cd2,
+ML.reason_cd3,
+ML.reason_cd4,
+ML.reason_cd5,
+ML.Admit_Type_Cd,
+ML.diag_cd2,
+ML.diag_cd3,
+ML.diag_cd4,
+ML.diag_cd5,
+ML.diag_cd6,
+ML.diag_cd7,
+ML.diag_cd8,
+ML.diag_cd9,
+ML.diag_cd10,
+pd.prov_type_cd,
+ML.Ctrct_Mop_Cd,
+coalesce (SERV_STATE_CD , BILL_STATE_CD) as SERV_STATE_CD,
+pd.prov_source_cd,
+CC.Reimb_Meth_Cd,
+CC.Contract_Eff_Date,
+CC.Contract_Term_Date,
+cc.serv_cat_type_cd,
+cc.contract_type_cd,
+b.status
+
+from fr_hgs_sandbox.KA_HH_DM_STATUS_MAPPER_2 b,
+edw_prod.MEDCLM_DLY_LINE_SECONDARY MS,
+edw_prod.MEDCLM_DLY_LINE_FACT MLF,
+edw_prod.MEDCLM_DLY_LINE ML,
+edw_prod.src_provider_dly   pd,
+edw_prod.CIS_CONTRACT CC
+
+where b.src_claim_nbr = MLF.src_claim_nbr
+and b.src_claim_nbr = MS.src_claim_nbr
+and MLF.Medclm_Key = ML.Medclm_Key
+and MLF.Cis_Contract_Key = cc.cis_contract_key
+and MS.Src_Provider_Id = pd.src_provider_id
+and b.src_claim_nbr in (select src_claim_nbr from 
+fr_hgs_sandbox.KA_HH_DM_STATUS_MAPPER_2 where SLNO between 1 and 2)
+ );
+ 
+select count(*),count(distinct src_claim_nbr) from fr_hgs_sandbox.KA_HH_DM_LINE_LEVEL;
+
+
+
+

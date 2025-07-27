@@ -1,0 +1,13 @@
+select  REIMB_METH_CD , count(distinct src_claim_nbr) Tot_Cnt,
+count(distinct case when STATUS_BUCKET = 'Finding' then src_claim_nbr end) Find_Cnt
+from fr_hgs_sandbox.HOMEH_CLAIMS_AUDIT_POST_HPDGM
+where  REIMB_METH_CD is not null
+group by    REIMB_METH_CD
+union all
+select REIMB_METH_CD , count(distinct src_claim_nbr) Tot_Cnt, count(distinct case when STATUS_BUCKET = 'Finding' then src_claim_nbr end) Find_Cnt
+
+from fr_hgs_sandbox.HOMEH_CLAIMS_AUDIT_POST_HPDGM
+where src_claim_nbr not in (select distinct src_claim_nbr from fr_hgs_sandbox.HOMEH_CLAIMS_AUDIT_POST_HPDGM
+
+                             where   REIMB_METH_CD is not null ) 
+group by  REIMB_METH_CD order by 3 desc ;

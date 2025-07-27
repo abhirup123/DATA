@@ -1,0 +1,39 @@
+select count(*),count(distinct src_claim_nbr) from fr_hgs_sandbox.KA_HH_DM_LINE_LEVEL;
+-------------------------------------------------------------
+select  count(distinct src_claim_nbr) Tot_Cnt,
+count(distinct case when STATUS = '1' then src_claim_nbr end) Find_Cnt
+from fr_hgs_sandbox.KA_HH_DM_LINE_LEVEL
+where OVERRIDE_CD in (
+'27',
+'00',
+'09',
+'37',
+'01'
+) or OVERRIDE_CD is null;
+
+----------------------------------------------------------
+select distinct a.src_claim_nbr,count(distinct a.revenue_cd),max(a.status)
+from fr_hgs_sandbox.KA_HH_DM_LINE_LEVEL a
+group by a.src_claim_nbr;
+
+-------------------------------------------------------------
+
+select  "Level" , count(distinct src_claim_nbr) Tot_Cnt,
+count(distinct case when STATUS = '1' then src_claim_nbr end) Find_Cnt
+from (select x.*,b."Level" from fr_hgs_sandbox.KA_HH_DM_LINE_LEVEL x
+left join KA_HIPPS_CODE_MAPPING b
+on x.hcpcs_cpt4_base_cd1 = b.hcpcs_cpt4_base_cd1)
+where  "Level" is not null
+group by    "Level"
+union all
+select "Level" , count(distinct src_claim_nbr) Tot_Cnt, count(distinct case when STATUS = '1' then src_claim_nbr end) Find_Cnt
+
+from (select x.*,b."Level" from fr_hgs_sandbox.KA_HH_DM_LINE_LEVEL x
+left join KA_HIPPS_CODE_MAPPING b
+on x.hcpcs_cpt4_base_cd1 = b.hcpcs_cpt4_base_cd1)
+where src_claim_nbr not in (select distinct src_claim_nbr from (select x.*,b."Level" from fr_hgs_sandbox.KA_HH_DM_LINE_LEVEL x
+left join KA_HIPPS_CODE_MAPPING b
+on x.hcpcs_cpt4_base_cd1 = b.hcpcs_cpt4_base_cd1)
+
+                             where   "Level" is not null ) 
+group by  "Level" order by 3 desc ;

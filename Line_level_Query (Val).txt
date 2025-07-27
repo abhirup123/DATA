@@ -1,0 +1,118 @@
+drop table fr_hgs_sandbox.TBLSAG_KA_DUPLICATE_POSTPAY_CLAIM_LIST;
+create table fr_hgs_sandbox.TBLSAG_KA_DUPLICATE_POSTPAY_CLAIM_LIST_VAL as (
+select /*+ ordered parallel(8) */
+ distinct ps.src_claim_nbr, ps.prim_rule_ind, ps.suspense_dt, ps.status_dt,ps.rule_status,
+  ps.rule_savings, ps.rule_reas_cd, case when  ps.rule_status in ('Overpaid','Underpaid') then 1 else 0 end as STATUS
+  from fr_ccm_rpts.pareo_summary ps
+ where ps.rule_query in ('169904','115472','72732','782835','115814','157331','80568','782774','80070',
+'89624','429381')
+   and ps.rule_status in ('Overpaid','Underpaid','Paid Accurately')
+ and ps.suspense_dt between '1jan25' and '31mar25');
+ 
+ select * from fr_hgs_sandbox.TBLSAG_KA_DUPLICATE_POSTPAY_CLAIM_LIST_VAL;
+
+
+delete from fr_hgs_sandbox.TBLSAG_KA_DUPLICATE_POSTPAY_CLAIM_LIST_VAL a
+where a.rule_status in ('Underpaid');
+commit;
+
+select * from fr_hgs_sandbox.TBLSAG_KA_DUPLICATE_POSTPAY_CLAIM_LIST_VAL a
+where a.rule_status in ('Underpaid');
+ -----------------------------------------------------------------------
+ ---------------------------------------------------------------------------
+ 
+ select dm.lob from fr_dm_pro.fr_datamart_medclms dm;
+select * from fr_opr_pro.fr_audit_history_claims   hc;
+select * from edw_prod.MEDCLM_DLY_LINE_SECONDARY MS;
+select * from fr_hgs_sandbox.icd_codes  icd;
+select * from edw_prod.MEDCLM_DLY_LINE_FACT MLF;
+select * from edw_prod.src_provider_dly   pd;
+select * from edw_prod.CIS_CONTRACT CC;
+----------------------------------------------------------------
+drop table  fr_hgs_sandbox.TBLSAG_KA_DUPLICATE_POSTPAY_CLAIM_LIST_VAL_;
+create table fr_hgs_sandbox.TBLSAG_KA_DUPLICATE_POSTPAY_CLAIM_LIST_VAL_ as(
+select a.*,ROW_NUMBER() OVER (ORDER BY  SRC_CLAIM_NBR) SLNO from(
+select a.* from fr_hgs_sandbox.TBLSAG_KA_DUPLICATE_POSTPAY_CLAIM_LIST_VAL a) a);
+
+select count(*) from fr_hgs_sandbox.TBLSAG_KA_DUPLICATE_POSTPAY_CLAIM_LIST_VAL_;
+
+create table fr_hgs_sandbox.TBLSAG_KA_DUPLICATE_POSTPAY_CLAIM_LIST_LINE_LEVEL_VAL as(
+select /*+ parallel(dm,8) parallel(MS,8) parallel(MLF,8) */
+distinct dm.src_claim_nbr,
+dm.src_lob_cd,
+dm.src_clm_type_cd,
+dm.pot_cd,
+dm.bill_type_cd,
+dm.revenue_cd,
+dm.src_drg_cd,
+dm.src_platform_cd,
+dm.src_cause_cd,
+dm.allow_ex_cd,
+dm.denied_ex_cd,
+dm.override_cd,
+dm.ctrct_cat_cd,
+CC.Reimb_Meth_Cd,
+dm.src_admit_date,
+dm.src_discharge_date,
+--dm.admit_diag_cd,
+dm.admit_hour,
+dm.admit_src_cd,
+dm.admit_type_cd,
+dm.hcpcs_cpt4_base_cd1,
+dm.hcpcs_cpt4_base_cd2,
+dm.cpt_mod_cd,
+MS.Cpt_Mod_Cd2,
+MS.Cpt_Mod_Cd3,
+MS.Cpt_Mod_Cd4,
+MS.Cpt_Mod_Cd5,
+dm.primary_diag_cd,
+dm.diag_cd2,
+dm.diag_cd3,
+dm.diag_cd4,
+dm.diag_cd5,
+dm.diag_cd6,
+dm.diag_cd7,
+dm.diag_cd8,
+dm.diag_cd9,
+dm.diag_cd10,
+dm.prov_tax_id,
+pd.prov_type_cd,
+dm.npi_id,
+dm.mbr_age,
+dm.client_nbr,
+dm.serv_from_date,
+dm.serv_to_date,
+dm.chrg_amt,
+dm.paid_amt,
+dm.deduct_amt,
+dm.mbr_coins_amt,
+dm.mbr_copay_amt,
+dm.mbr_resp_amt,
+dm.ctrct_mop_cd,
+coalesce (SERV_STATE_CD , BILL_STATE_CD) as SERV_STATE_CD,
+dm.serv_type_cd1,
+dm.serv_type_cd2,
+dm.serv_type_cd_other,
+dm.serv_unit_cnt,
+CC.Contract_Eff_Date,
+CC.Contract_Term_Date,
+b.prim_rule_ind,
+b.suspense_dt,
+b.status_dt,
+b.rule_status,
+b.rule_savings,
+b.rule_reas_cd,
+b.status
+from fr_dm_pro.fr_datamart_medclms dm
+join edw_prod.MEDCLM_DLY_LINE_SECONDARY MS
+on dm.medclm_key=MS.MEDCLM_KEY
+join edw_prod.MEDCLM_DLY_LINE_FACT MLF
+on dm.medclm_key=MLF.MEDCLM_KEY
+join edw_prod.src_provider_dly pd
+on dm.src_provider_key = pd.src_provider_key
+join edw_prod.CIS_CONTRACT CC
+on dm.Cis_Contract_Key = CC.cis_contract_key
+join fr_hgs_sandbox.TBLSAG_KA_DUPLICATE_POSTPAY_CLAIM_LIST_VAL b
+on dm.src_claim_nbr=cast(b.src_claim_nbr as varchar2(20))
+where dm.src_claim_nbr in(select distinct cast(src_claim_nbr as varchar2(20)) from fr_hgs_sandbox.TBLSAG_KA_DUPLICATE_POSTPAY_CLAIM_LIST_VAL))
+
